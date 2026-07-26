@@ -91,14 +91,14 @@ HALIUM_BOOT_INTERMEDIATE := $(call intermediates-dir-for,ROOT,$(LOCAL_MODULE),)
 HALIUM_BOOT_RAMDISK := $(HALIUM_BOOT_INTERMEDIATE)/halium-initramfs.gz
 GET_INITRD := $(LOCAL_PATH)/get-initrd.sh
 
-$(LOCAL_BUILT_MODULE): $(INSTALLED_KERNEL_TARGET) $(HALIUM_BOOT_RAMDISK) $(BOOTIMAGE_EXTRA_DEPS)
+$(LOCAL_BUILT_MODULE): $(MKBOOTIMG) $(INSTALLED_KERNEL_TARGET) $(HALIUM_BOOT_RAMDISK) $(BOOTIMAGE_EXTRA_DEPS)
 	@echo "Making halium-boot.img in $(dir $@) using $(INSTALLED_KERNEL_TARGET) $(HALIUM_BOOT_RAMDISK)"
 	@mkdir -p $(dir $@)
 	@rm -rf $@
 ifeq ($(BOARD_CUSTOM_MKBOOTIMG),pack_intel)
 	$(MKBOOTIMG) $(DEVICE_BASE_BOOT_IMAGE) $(INSTALLED_KERNEL_TARGET) $(HALIUM_BOOT_RAMDISK) $(cmdline) $@
 else
-	@mkbootimg --ramdisk $(HALIUM_BOOT_RAMDISK) $(HALIUM_BOOTIMAGE_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $@
+	@$(MKBOOTIMG) --ramdisk $(HALIUM_BOOT_RAMDISK) $(HALIUM_BOOTIMAGE_ARGS) $(BOARD_MKBOOTIMG_ARGS) --output $@
 endif
 ifdef BOOT_RAMDISK_SEANDROIDENFORCE
 	@echo -n "SEANDROIDENFORCE" >> $@
@@ -115,7 +115,5 @@ else
 endif
 
 .PHONY: halium-common
-
-halium-boot: mkbootimg
 
 halium-common: bootimage halium-boot
