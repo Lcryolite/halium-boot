@@ -87,9 +87,15 @@ LOCAL_MODULE_PATH := $(PRODUCT_OUT)
 include $(BUILD_SYSTEM)/base_rules.mk
 HALIUM_BOOT_INTERMEDIATE := $(call intermediates-dir-for,ROOT,$(LOCAL_MODULE),)
 
-.PHONY: HALIUM_BOOT_RAMDISK
 HALIUM_BOOT_RAMDISK := $(HALIUM_BOOT_INTERMEDIATE)/halium-initramfs.gz
 GET_INITRD := $(LOCAL_PATH)/get-initrd.sh
+HALIUM_LOCAL_INITRD :=
+ifdef BOARD_USE_LOCAL_INITRD
+HALIUM_LOCAL_INITRD := $(firstword $(wildcard device/*/$(TARGET_DEVICE)/initramfs.gz))
+ifeq ($(HALIUM_LOCAL_INITRD),)
+$(error BOARD_USE_LOCAL_INITRD is set but device/*/$(TARGET_DEVICE)/initramfs.gz is missing)
+endif
+endif
 
 $(LOCAL_BUILT_MODULE): $(MKBOOTIMG) $(INSTALLED_KERNEL_TARGET) $(HALIUM_BOOT_RAMDISK) $(BOOTIMAGE_EXTRA_DEPS)
 	@echo "Making halium-boot.img in $(dir $@) using $(INSTALLED_KERNEL_TARGET) $(HALIUM_BOOT_RAMDISK)"
@@ -104,12 +110,12 @@ ifdef BOOT_RAMDISK_SEANDROIDENFORCE
 	@echo -n "SEANDROIDENFORCE" >> $@
 endif
 
-$(HALIUM_BOOT_RAMDISK):
+$(HALIUM_BOOT_RAMDISK): $(HALIUM_LOCAL_INITRD)
 	@mkdir -p $(dir $@)
 	@echo "Downloading initramfs to : $@"
 ifdef BOARD_USE_LOCAL_INITRD
-	@echo "Using local initramfs at device/*/$(TARGET_DEVICE)/initramfs.gz"
-	@cp device/*/$(TARGET_DEVICE)/initramfs.gz $@
+	@echo "Using local initramfs at $(HALIUM_LOCAL_INITRD)"
+	@cp $(HALIUM_LOCAL_INITRD) $@
 else
 	@$(GET_INITRD) ${TARGET_ARCH} $@
 endif
